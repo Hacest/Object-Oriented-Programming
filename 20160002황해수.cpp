@@ -7,8 +7,23 @@ using namespace bangtal;
 
 int main()
 {
+	int push = 0;
 	auto scene1 = Scene::create("룸1", "Images/배경-1.png");
 	auto scene2 = Scene::create("룸2", "Images/배경-2.png");
+	auto scene0 = Scene::create("Game Over", "Images/GameOver.png");
+	auto timer = Timer::create(30.f);
+
+	showTimer(timer);
+
+	timer->setOnTimerCallback([&](TimerPtr)->bool
+		{
+			setGameOption(GameOption::GAME_OPTION_INVENTORY_BUTTON, false);
+			setGameOption(GameOption::GAME_OPTION_MESSAGE_BOX_BUTTON, false);
+			scene0->enter();
+			return true;
+		});
+
+	timer->start();
 
 	auto door1 = Object::create("Images/문-오른쪽-닫힘.png", scene1, 800, 270);
 	auto open1 = false;
@@ -45,14 +60,22 @@ int main()
 		{
 			if (open1 == true)
 			{
-				scene2->enter();
+				showMessage("문이 낡아서 안열립니다. 계속 밀다보면 열릴지도?");
+				push = push + 1;
+				if (push > 3)
+				{
+					showMessage("쾅!");
+					door1->setImage("Images/문-오른쪽-열림.png");
+					scene2->enter();
+				}
+
 			}
 			else if (key->isHanded())
 			{
-				door1->setImage("Images/문-오른쪽-열림.png");
+				showMessage("문이 낡아서 안열립니다. 계속 밀다보면 열릴지도?");
 				open1 = true;
 			}
-			else
+			else 
 			{
 				showMessage("열쇠가 필요합니다");
 			}
@@ -65,10 +88,13 @@ int main()
 	door2->setOnMouseCallback([&](ObjectPtr Object, int x, int y, MouseAction action)->bool
 		{
 			scene1->enter();
+			door1->setImage("Images/문-오른쪽-닫힘.png");
+			showMessage("문이 저절로 닫혔습니다.");
+			push = 0;
 			return true;
 		});
 
-	auto door3 = Object::create("Images/문-오른쪽-닫힘.png", scene2, 910, 270, false);
+	auto door3 = Object::create("Images/문-왼쪽-닫힘.png", scene1, 200, 280, false);
 	auto open3 = false, locked3 = true;
 	door3->setOnMouseCallback([&](ObjectPtr Object, int x, int y, MouseAction action)->bool
 		{
@@ -82,7 +108,7 @@ int main()
 			}
 			else if (open3 == false)
 			{
-				door3->setImage("Images/문-오른쪽-열림.png");
+				door3->setImage("Images/문-왼쪽-열림.png");
 				open3 = true;
 			}
 			return true;
@@ -90,8 +116,9 @@ int main()
 
 	door3->setOnKeypadCallback([&](ObjectPtr object)->bool
 		{
-			showMessage("철커덕");
 			locked3 = false;
+			showMessage("새로운 문이 생겼다.");
+			door3->show();
 			return true;
 		});
 
@@ -112,7 +139,8 @@ int main()
 				scene2->setLight(0.1f);
 				lighted = false;
 				password->show();
-				door3->show();
+				showMessage("암호는 보이는데 문이 없다..?");
+
 			}
 			else
 			{
